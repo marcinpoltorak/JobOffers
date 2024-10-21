@@ -3,10 +3,15 @@ spring:
     mongodb:
       uri: mongodb://admin:admin@localhost:27017/joboffers
 
-job-offers:
-  offer-fetcher:
-    http:
-      client:
-        config:
-          uri: http://ec2-3-120-147-150.eu-central-1.compute.amazonaws.com
-          port: 5057
+offers:
+  http:
+    scheduler:
+      request:
+        delay: PT3H
+    client:
+      config:
+        uri: http://ec2-3-120-147-150.eu-central-1.compute.amazonaws.com
+        port: 5057
+
+scheduling:
+  enabled: true

@@ -1,15 +1,14 @@
 package pl.joboffers.infrastructure.offer.controller;
 
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import pl.joboffers.domain.offer.OfferFacade;
-import pl.joboffers.domain.offer.OfferNotFoundException;
+import pl.joboffers.domain.offer.dto.OfferRequestDto;
 import pl.joboffers.domain.offer.dto.OfferResponseDto;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -28,5 +27,11 @@ public class OffersRestController {
     public ResponseEntity<OfferResponseDto> findOfferById(@PathVariable String id){
         OfferResponseDto offer = offerFacade.findOfferById(id);
         return ResponseEntity.ok(offer);
+    }
+
+    @PostMapping()
+    public ResponseEntity<OfferResponseDto> addOffer(@RequestBody @Valid OfferRequestDto offerRequestDto){
+        OfferResponseDto responseDto = offerFacade.saveOffer(offerRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 }

@@ -1,5 +1,6 @@
 package pl.joboffers.domain.offer;
 
+import com.mongodb.DuplicateKeyException;
 import org.junit.jupiter.api.Test;
 import pl.joboffers.domain.offer.dto.JobOfferResponse;
 import pl.joboffers.domain.offer.dto.OfferRequestDto;
@@ -92,7 +93,7 @@ public class OfferFacadeTest {
                 new OfferRequestDto("gfd", "hjgf", "1354", "myjob.pl")));
         // then
         assertThat(thrown)
-                .isInstanceOf(OfferDuplicateException.class)
+                .isInstanceOf(DuplicateKeyException.class)
                 .hasMessage("Offer with offerUrl [myjob.pl] already exists");
     }
 }

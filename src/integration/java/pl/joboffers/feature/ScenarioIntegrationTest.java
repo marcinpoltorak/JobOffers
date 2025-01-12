@@ -5,6 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import pl.joboffers.BaseIntegrationTest;
@@ -15,7 +16,9 @@ import pl.joboffers.infrastructure.offer.scheduler.HttpOffersScheduler;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,7 +53,7 @@ public class ScenarioIntegrationTest extends BaseIntegrationTest implements Samp
         // then
         MvcResult mvcResult = perform.andExpect(status().isOk()).andReturn();
         String json = mvcResult.getResponse().getContentAsString();
-        List<OfferResponseDto> offers = objectMapper.readValue(json, new TypeReference<List<OfferResponseDto>>(){});
+        List<OfferResponseDto> offers = objectMapper.readValue(json, new TypeReference<>(){});
         assertThat(offers).isEmpty();
 
 
@@ -78,6 +81,40 @@ public class ScenarioIntegrationTest extends BaseIntegrationTest implements Samp
         // step 14: scheduler ran 3rd time and made GET to external server and system added 2 new offers with ids: 3000 and 4000 to database
         // step 15: user made GET /offers with header “Authorization: Bearer AAAA.BBBB.CCC” and system returned OK(200) with 4 offers with ids: 1000,2000, 3000 and 4000
         // step 16: user made POST /offers with header “Authorization: Bearer AAAA.BBBB.CCC” and offer and system returned CREATED(201) with saved offer
+        // given & when
+        ResultActions performSave = mockMvc.perform(post("/offers")
+                .content("""
+                        {
+                        "company": "Some Random Company",
+                        "position": "position",
+                        "salary": "4 000 - 8 000 PLN",
+                        "offerUrl": "https://myjoboffer.net"
+                        }
+                        """.trim())
+                .contentType(MediaType.APPLICATION_JSON + ";charset=UTF-8")
+        );
+        // then
+        MvcResult mvcSaveResult = performSave.andExpect(status().isCreated()).andReturn();
+        String saveResponseJson = mvcSaveResult.getResponse().getContentAsString();
+        OfferResponseDto offerResponse = objectMapper.readValue(saveResponseJson, OfferResponseDto.class);
+        String id = offerResponse.id();
+        assertAll(
+                () -> assertThat(offerResponse.company()).isEqualTo("Some Random Company"),
+                () -> assertThat(offerResponse.offerUrl()).isEqualTo("https://myjoboffer.net"),
+                () -> assertThat(offerResponse.position()).isEqualTo("position"),
+                () -> assertThat(offerResponse.salary()).isEqualTo("4 000 - 8 000 PLN"),
+                () -> assertThat(id).isNotNull()
+        );
+
+
         // step 17: user made GET /offers with header “Authorization: Bearer AAAA.BBBB.CCC” and system returned OK(200) with 1 offer
+        // given & when
+        ResultActions performOffers = mockMvc.perform(get("/offers"));
+        // then
+        MvcResult offersMvcResult = performOffers.andExpect(status().isOk()).andReturn();
+        String offersJson = offersMvcResult.getResponse().getContentAsString();
+        List<OfferResponseDto> offerList = objectMapper.readValue(offersJson, new TypeReference<>() {});
+        assertThat(offerList).hasSize(1);
+        assertThat(offerList.stream().map(OfferResponseDto::id)).contains(id);
     }
 }

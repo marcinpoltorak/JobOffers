@@ -11,7 +11,7 @@ import pl.joboffers.domain.offer.OfferNotFoundException;
 
 import java.util.Collections;
 
-@ControllerAdvice
+@ControllerAdvice("pl.joboffers.infrastructure.offer")
 @Log4j2
 public class OffersControllerExceptionHandler {
 
@@ -27,7 +27,7 @@ public class OffersControllerExceptionHandler {
     @ExceptionHandler(DuplicateKeyException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.CONFLICT)
-    public OfferPostErrorResponse handleOfferNotFound(DuplicateKeyException exception){
+    public OfferPostErrorResponse handleOfferAlreadyExists(DuplicateKeyException exception){
         String message = "Offer already exists";
         log.warn(message);
         return new OfferPostErrorResponse(Collections.singletonList(message), HttpStatus.CONFLICT);

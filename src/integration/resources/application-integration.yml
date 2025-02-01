@@ -6,3 +6,9 @@ offers:
 
 scheduling:
   enabled: false
+
+spring:
+  cache:
+    type: none
+    redis:
+      time-to-live: PT60M

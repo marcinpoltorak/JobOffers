@@ -2,12 +2,14 @@ package pl.joboffers.feature;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.containers.MongoDBContainer;
@@ -60,14 +62,7 @@ public class ScenarioIntegrationTest extends BaseIntegrationTest implements Samp
         assertThat(savedOffers).isEmpty();
         // step 3: user tried to get JWT token by requesting POST /token with username=someUser, password=somePassword and system returned UNAUTHORIZED(401)
         // given & when
-        ResultActions failedLoginRequest = mockMvc.perform(post("/token")
-                .content("""
-                        {
-                        "username": "someUser",
-                        "password": "somePassword"
-                        }
-                        """.trim())
-                .contentType(MediaType.APPLICATION_JSON_VALUE));
+        ResultActions failedLoginRequest = postLoginRequest("someUser", "somePassword", mockMvc);
 
         // then
         failedLoginRequest
@@ -87,28 +82,14 @@ public class ScenarioIntegrationTest extends BaseIntegrationTest implements Samp
         failedGetOffersRequest.andExpect(status().isForbidden());
         // step 5: user made POST /register with username=someUser, password=somePassword and system registered user with status CREATED(201)
         // given & when
-        ResultActions registerAction = mockMvc.perform(post("/register")
-                .content("""
-                        {
-                        "username": "someUser",
-                        "password": "somePassword"
-                        }
-                        """.trim())
-                .contentType(MediaType.APPLICATION_JSON_VALUE));
+        ResultActions registerAction = postRegister("someUser", "somePassword", mockMvc);
 
         // then
         registerAction.andExpect(status().isCreated());
 
         // step 6: user tried to get JWT token by requesting POST /token with username=someUser, password=somePassword and system returned OK(200) and jwttoken=AAAA.BBBB.CCC
         // given & when
-        ResultActions successLoginRequest = mockMvc.perform(post("/token")
-                .content("""
-                        {
-                        "username": "someUser",
-                        "password": "somePassword"
-                        }
-                        """.trim())
-                .contentType(MediaType.APPLICATION_JSON_VALUE));
+        ResultActions successLoginRequest = postLoginRequest("someUser", "somePassword", mockMvc);
 
         // then
         MvcResult mvcSuccessLoginResult = successLoginRequest.andExpect(status().isOk()).andReturn();
@@ -261,5 +242,29 @@ public class ScenarioIntegrationTest extends BaseIntegrationTest implements Samp
         List<OfferResponseDto> offerList = objectMapper.readValue(offersJson, new TypeReference<>() {});
         assertThat(offerList).hasSize(5);
         assertThat(offerList.stream().map(OfferResponseDto::id)).contains(id);
+    }
+
+    @NotNull
+    public static ResultActions postRegister(String username, String password, MockMvc mockMvc) throws Exception {
+        return mockMvc.perform(post("/register")
+                .content("""
+                        {
+                        "username": "%s",
+                        "password": "%s"
+                        }
+                        """.formatted(username, password).trim())
+                .contentType(MediaType.APPLICATION_JSON_VALUE));
+    }
+
+    @NotNull
+    public static ResultActions postLoginRequest(String username, String password, MockMvc mockMvc) throws Exception {
+        return mockMvc.perform(post("/token")
+                .content("""
+                        {
+                        "username": "%s",
+                        "password": "%s"
+                        }
+                        """.formatted(username, password).trim())
+                .contentType(MediaType.APPLICATION_JSON_VALUE));
     }
 }

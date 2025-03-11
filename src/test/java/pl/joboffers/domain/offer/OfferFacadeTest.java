@@ -1,7 +1,7 @@
 package pl.joboffers.domain.offer;
 
-import com.mongodb.DuplicateKeyException;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DuplicateKeyException;
 import pl.joboffers.domain.offer.dto.JobOfferResponse;
 import pl.joboffers.domain.offer.dto.OfferRequestDto;
 import pl.joboffers.domain.offer.dto.OfferResponseDto;
@@ -10,7 +10,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
-import static org.junit.jupiter.api.Assertions.*;
 public class OfferFacadeTest {
 
     @Test
